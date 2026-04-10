@@ -39,7 +39,7 @@ Sigue estos pasos para instalar y ejecutar StudyGuide-Gen en tu máquina local:
 
 3. **Instala las dependencias**:
    ```bash
-   pip install customtkinter
+   pip install -r requirements.txt
    ```
 
 ¡Listo! Ahora puedes ejecutar la aplicación.
