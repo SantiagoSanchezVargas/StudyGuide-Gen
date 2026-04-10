@@ -4,6 +4,8 @@ import uuid
 import re
 import threading
 from datetime import datetime
+from PyPDF2 import PdfReader
+from docx import Document
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import pyperclip
@@ -11,24 +13,56 @@ import pyperclip
 
 def leer_archivo_local(ruta):
     """
-    Lee el contenido de un archivo .txt local.
+    Lee el contenido de un archivo .txt, .pdf o .docx local.
 
     Args:
-        ruta (str): La ruta absoluta al archivo .txt.
+        ruta (str): La ruta absoluta al archivo.
 
     Returns:
         str: El contenido del archivo.
 
     Raises:
         FileNotFoundError: Si el archivo no existe.
-        ValueError: Si no es un archivo .txt.
+        ValueError: Si el formato no es soportado o el archivo no contiene texto.
     """
-    if not ruta.endswith('.txt'):
-        raise ValueError("El archivo debe ser un .txt")
     if not os.path.exists(ruta):
         raise FileNotFoundError(f"El archivo {ruta} no existe")
-    with open(ruta, 'r', encoding='utf-8') as f:
-        return f.read()
+
+    extension = os.path.splitext(ruta)[1].lower()
+    if extension == '.txt':
+        with open(ruta, 'r', encoding='utf-8') as f:
+            texto = f.read()
+    elif extension == '.pdf':
+        try:
+            with open(ruta, 'rb') as f:
+                reader = PdfReader(f)
+                if reader.is_encrypted:
+                    if reader.decrypt("") == 0:
+                        raise ValueError("El PDF está protegido con contraseña y no se puede leer.")
+                texto = "\n".join(page.extract_text() or "" for page in reader.pages)
+        except Exception as e:
+            raise ValueError(f"No se pudo leer el PDF: {e}")
+    elif extension == '.docx':
+        try:
+            documento = Document(ruta)
+            texto = "\n".join(parrafo.text for parrafo in documento.paragraphs)
+        except Exception as e:
+            raise ValueError(f"No se pudo leer el documento Word: {e}")
+    else:
+        raise ValueError("Formato no soportado. Selecciona un archivo .txt, .pdf o .docx.")
+
+    texto = limpiar_texto(texto)
+    if not texto:
+        raise ValueError("El archivo está vacío o no contiene texto legible.")
+    return texto
+
+
+def limpiar_texto(texto):
+    """Normaliza texto eliminando saltos de línea excesivos y caracteres extraños."""
+    texto = texto.replace("\r\n", "\n").replace("\r", "\n")
+    texto = re.sub(r"\n{3,}", "\n\n", texto)
+    texto = re.sub(r"[^\S\n]+", " ", texto)
+    return texto.strip()
 
 
 def crear_guia(titulo, materia, tipo_documento, puntos_clave, roadmap):
@@ -233,7 +267,7 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
-        self.title("Academic Architect Pro")
+        self.title("StudyGuide-Gen")
         self.geometry("1200x700")
         
         # Layout de dos columnas
@@ -251,7 +285,7 @@ class App(ctk.CTk):
         self.combo_tipo = ctk.CTkComboBox(self.frame_entrada, values=["ESTUDIO", "LABORATORIO", "MARCO_REFERENCIAL"])
         self.combo_tipo.pack(pady=5)
         
-        self.btn_cargar = ctk.CTkButton(self.frame_entrada, text="Cargar Archivo .txt", command=self.cargar_archivo, fg_color="#007BFF")
+        self.btn_cargar = ctk.CTkButton(self.frame_entrada, text="Cargar Archivo", command=self.cargar_archivo, fg_color="#007BFF")
         self.btn_cargar.pack(pady=5)
         
         ctk.CTkLabel(self.frame_entrada, text="O pega el texto aquí:").pack(pady=5)
@@ -272,8 +306,12 @@ class App(ctk.CTk):
         self.resultados = None
     
     def cargar_archivo(self):
-        ruta = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt")])
+        ruta = filedialog.askopenfilename(filetypes=[("Documentos académicos", "*.txt *.pdf *.docx")])
         if ruta:
+            extension = os.path.splitext(ruta)[1].lower()
+            if extension not in ('.txt', '.pdf', '.docx'):
+                messagebox.showerror("Error", "Formato no soportado. Selecciona .txt, .pdf o .docx.")
+                return
             try:
                 self.texto_crudo = leer_archivo_local(ruta)
                 self.textbox_entrada.delete("1.0", "end")

@@ -11,6 +11,7 @@ En un mundo donde el tiempo es oro, StudyGuide-Gen actúa como tu compañero dig
 - **Modo Laboratorio**: Extrae automáticamente materiales esenciales de documentos y genera roadmaps personalizados para guiar tus experimentos y proyectos prácticos.
 - **Modo Referencial**: Utiliza procesamiento de texto avanzado con expresiones regulares (Regex) para extraer y formatear citas en estilos APA e IEEE, simplificando la creación de marcos referenciales.
 - **Modo Estudio**: Genera flashcards interactivas y resalta conceptos clave para un estudio eficiente y memorable.
+- **Soporte de múltiples formatos**: Carga documentos .txt, .pdf y .docx para procesar contenido académico desde varias fuentes.
 - **Interfaz Moderna**: Construida con CustomTkinter, ofrece una experiencia de usuario fluida con un elegante modo oscuro que reduce la fatiga visual durante sesiones largas.
 - **Zero-Database**: Almacenamiento local ligero mediante archivos JSON, asegurando privacidad y portabilidad sin dependencias externas.
 

@@ -1,2 +1,4 @@
 customtkinter
 pyperclip
+PyPDF2
+python-docx
